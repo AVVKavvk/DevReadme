@@ -36,8 +36,9 @@ jobs:
             --arg content "$CONTENT" \
             '{version: {number: 2}, title: $title, body: {storage: {value: $content, representation: "storage"}}}')
           
-          # Update the Confluence page
+          # Update the Confluence page with HTTP/1.1
           curl -X PUT \
+            --http1.1 \
             -H "$AUTH_HEADER" \
             -H "Content-Type: application/json" \
             --data "$JSON_PAYLOAD" \
