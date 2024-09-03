@@ -1,0 +1,33 @@
+name: Update Confluence Page
+
+on:
+  push:
+    paths:
+      - 'README.md'
+
+jobs:
+  update-confluence:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Convert README.md to HTML
+        run: |
+          sudo apt-get install pandoc
+          pandoc README.md -f markdown -t html -s -o README.html
+
+      - name: Update Confluence page
+        run: |
+          curl -X PUT \
+            -H "Authorization: Basic $(echo -n ${{ secrets.CONFLUENCE_USERNAME }}:${{ secrets.CONFLUENCE_API_TOKEN }} | base64)" \
+            -H "Content-Type: application/json" \
+            --data "$(jq -n \
+                --arg title "Your Page Title" \
+                --arg content "$(cat README.html | sed 's/\"/\\\"/g')" \
+                '{version: {number: 2}, title: $title, body: {storage: {value: $content, representation: "storage"}}}')" \
+            https://eagleeyenetworks.atlassian.net/wiki/rest/api/content/${{ secrets.CONFLUENCE_PAGE_ID }}
+
+      - name: Clean up
+        run: |
+          rm README.html
